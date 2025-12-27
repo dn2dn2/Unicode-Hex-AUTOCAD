@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển đổi Unicode sang mã AutoLISP</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; }
+        h2 { color: #2c3e50; text-align: center; }
+        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        label { font-weight: bold; display: block; margin-bottom: 8px; color: #34495e; }
+        textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; margin-bottom: 20px; resize: vertical; }
+        .output-box { background-color: #eef2f7; border: 1px solid #3498db; color: #2c3e50; font-family: 'Courier New', Courier, monospace; position: relative; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        button:hover { background-color: #2980b9; }
+        .copy-btn { margin-top: 10px; background-color: #27ae60; }
+        .copy-btn:hover { background-color: #219150; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Chuyển đổi Tiếng Việt sang Unicode Hex (định dạng \U+XXXX)</h2>
+    
+    <label for="inputText">Nhập văn bản tiếng Việt:</label>
+    <textarea id="inputText" placeholder="Ví dụ: Đã nạp xong" oninput="convertText()"></textarea>
+
+    <label for="outputText">Kết quả mã AutoLISP:</label>
+    <textarea id="outputText" class="output-box" readonly></textarea>
+
+    <button class="copy-btn" onclick="copyToClipboard()">Sao chép kết quả</button>
+</div>
+
+<script>
+    function convertText() {
+        const input = document.getElementById('inputText').value;
+        let output = "";
+
+        for (let i = 0; i < input.length; i++) {
+            let charCode = input.charCodeAt(i);
+            // Kiểm tra nếu là ký tự Unicode (ngoài bảng ASCII cơ bản)
+            if (charCode > 127) {
+                let hex = charCode.toString(16).toUpperCase().padStart(4, '0');
+                output += "\\U+" + hex;
+            } else {
+                output += input[i];
+            }
+        }
+        document.getElementById('outputText').value = output;
+    }
+
+    function copyToClipboard() {
+        const outputText = document.getElementById('outputText');
+        outputText.select();
+        document.execCommand('copy');
+        alert('Đã sao chép vào bộ nhớ tạm!');
+    }
+</script>
+
+</body>
+</html>

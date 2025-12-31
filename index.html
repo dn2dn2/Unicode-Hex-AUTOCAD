@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bộ chuyển đổi AutoLISP</title>
+    <title>AutoLISP Converter</title>
     <style>
+        /* Thiết lập giao diện rộng rãi, dễ nhìn */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             line-height: 1.6; 
-            max-width: 1200px; /* Đã mở rộng */
+            max-width: 1200px; 
             margin: 20px auto; 
             padding: 20px; 
             background-color: #f0f2f5; 
@@ -16,7 +17,7 @@
         
         h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
         
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; } /* Tăng khoảng cách cột */
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
 
         .card { 
@@ -24,25 +25,19 @@
             padding: 25px; 
             border-radius: 12px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
-            display: flex; 
-            flex-direction: column; 
+            display: flex; flex-direction: column; 
         }
         
         .card h3 { margin-top: 0; color: #3498db; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; }
         
         label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 8px; color: #555; font-size: 18px; }
         
+        /* Ô nhập liệu to, rõ ràng */
         textarea { 
-            width: 100%; 
-            height: 300px; /* Tăng chiều cao lên 300px */
-            padding: 15px; 
-            border: 1px solid #ccc; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-family: 'Courier New', monospace; 
-            font-size: 16px; /* Tăng cỡ chữ lên 16px */
-            resize: vertical; 
-            line-height: 1.5;
+            width: 100%; height: 300px; padding: 15px; 
+            border: 1px solid #ccc; border-radius: 8px; 
+            box-sizing: border-box; font-family: 'Courier New', monospace; 
+            font-size: 16px; resize: vertical; line-height: 1.5;
         }
         textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
         
@@ -54,26 +49,18 @@
         #inputLispDecode { background-color: #fff; }
         #outputVNDecode { background-color: #e8f8f5; color: #27ae60; font-weight: bold; }
 
-        /* Style nút Copy to hơn */
+        /* Nút Copy đẹp */
         .btn-copy {
-            margin-top: 20px;
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px; /* Chữ to hơn */
-            color: white;
-            transition: opacity 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            margin-top: 20px; padding: 15px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-size: 16px; color: white;
+            transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
         .btn-copy:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-blue { background-color: #3498db; }
         .btn-green { background-color: #27ae60; }
 
+        /* Highlight ghi chú tính năng */
+        .note { font-size: 13px; color: #e74c3c; margin-top: 5px; font-style: italic;}
     </style>
 </head>
 <body>
@@ -84,7 +71,7 @@
     <div class="card">
         <h3>1. Mã hóa (Việt ➔ Lisp)</h3>
         <label>Nhập tiếng Việt:</label>
-        <textarea id="inputVN" placeholder="Ví dụ: Bản vẽ hoàn công..." oninput="encodeText()"></textarea>
+        <textarea id="inputVN" placeholder='Ví dụ: Thép hình chữ "I", Đường dẫn C:\AutoCAD...' oninput="encodeText()"></textarea>
         
         <div class="arrow-icon">⬇</div>
         
@@ -113,33 +100,62 @@
 </div>
 
 <script>
+    // --- HÀM MÃ HÓA (NÂNG CẤP) ---
     function encodeText() {
         const input = document.getElementById('inputVN').value;
         let output = "";
+
         for (let i = 0; i < input.length; i++) {
             let charCode = input.charCodeAt(i);
             let char = input[i];
-            if (char === '"') output += '\\"';
-            else if (char === '\\') output += '\\\\';
-            else if (charCode > 127) output += "\\U+" + charCode.toString(16).toUpperCase().padStart(4, '0');
-            else output += char;
+
+            // 1. XỬ LÝ DẤU NGOẶC KÉP (") -> Thêm \"
+            if (char === '"') {
+                output += '\\"'; 
+            } 
+            // 2. XỬ LÝ DẤU GẠCH CHÉO (\) -> Thêm \\
+            else if (char === '\\') {
+                output += '\\\\'; 
+            } 
+            // 3. XỬ LÝ UNICODE TIẾNG VIỆT
+            else if (charCode > 127) {
+                let hex = charCode.toString(16).toUpperCase().padStart(4, '0');
+                output += "\\U+" + hex;
+            } 
+            // 4. KÝ TỰ THƯỜNG
+            else {
+                output += char;
+            }
         }
         document.getElementById('outputLisp').value = output;
     }
 
+    // --- HÀM GIẢI MÃ ---
     function decodeText() {
         let input = document.getElementById('inputLispDecode').value;
-        let output = input.replace(/\\U\+([0-9A-Fa-f]{4})/gi, (match, hexGroup) => String.fromCharCode(parseInt(hexGroup, 16)));
-        output = output.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        
+        // Bước 1: Dịch mã Unicode \U+xxxx
+        let output = input.replace(/\\U\+([0-9A-Fa-f]{4})/gi, (match, hexGroup) => {
+            return String.fromCharCode(parseInt(hexGroup, 16));
+        });
+
+        // Bước 2: Dịch ngược ký tự đặc biệt (\\" -> " và \\\\ -> \)
+        // Lưu ý: Phải thay thế \\\\ trước để tránh nhầm lẫn
+        output = output.replace(/\\\\/g, '\\').replace(/\\"/g, '"');
+        
         document.getElementById('outputVNDecode').value = output;
     }
 
+    // --- HÀM COPY ---
     function copyResult(elementId) {
         const copyText = document.getElementById(elementId);
         copyText.select();
         copyText.setSelectionRange(0, 99999);
+        
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(copyText.value).then(() => alert("Đã sao chép thành công!")).catch(err => console.error(err));
+            navigator.clipboard.writeText(copyText.value)
+                .then(() => alert("Đã sao chép thành công!"))
+                .catch(err => console.error(err));
         } else {
             document.execCommand("copy");
             alert("Đã sao chép!");

@@ -3,57 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chuyển đổi Unicode sang mã AutoLISP</title>
+    <title>Bộ chuyển đổi AutoLISP</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; }
-        h2 { color: #2c3e50; text-align: center; }
-        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        label { font-weight: bold; display: block; margin-bottom: 8px; color: #34495e; }
-        textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; margin-bottom: 20px; resize: vertical; }
-        .output-box { background-color: #eef2f7; border: 1px solid #3498db; color: #2c3e50; font-family: 'Courier New', Courier, monospace; position: relative; }
-        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
-        button:hover { background-color: #2980b9; }
-        .copy-btn { margin-top: 10px; background-color: #27ae60; }
-        .copy-btn:hover { background-color: #219150; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            line-height: 1.6; 
+            max-width: 1200px; /* Đã mở rộng */
+            margin: 20px auto; 
+            padding: 20px; 
+            background-color: #f0f2f5; 
+        }
+        
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; } /* Tăng khoảng cách cột */
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .card h3 { margin-top: 0; color: #3498db; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; }
+        
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 8px; color: #555; font-size: 18px; }
+        
+        textarea { 
+            width: 100%; 
+            height: 300px; /* Tăng chiều cao lên 300px */
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: 'Courier New', monospace; 
+            font-size: 16px; /* Tăng cỡ chữ lên 16px */
+            resize: vertical; 
+            line-height: 1.5;
+        }
+        textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
+        
+        .arrow-icon { text-align: center; font-size: 30px; color: #95a5a6; margin: 15px 0; }
+        
+        #inputVN { background-color: #fff; }
+        #outputLisp { background-color: #f4f6f7; color: #2980b9; font-weight: bold; }
+        
+        #inputLispDecode { background-color: #fff; }
+        #outputVNDecode { background-color: #e8f8f5; color: #27ae60; font-weight: bold; }
+
+        /* Style nút Copy to hơn */
+        .btn-copy {
+            margin-top: 20px;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px; /* Chữ to hơn */
+            color: white;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-copy:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-blue { background-color: #3498db; }
+        .btn-green { background-color: #27ae60; }
+
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Chuyển đổi Tiếng Việt sang Unicode Hex (định dạng \U+XXXX)</h2>
-    
-    <label for="inputText">Nhập văn bản tiếng Việt:</label>
-    <textarea id="inputText" placeholder="Ví dụ: Đã nạp xong" oninput="convertText()"></textarea>
+<h1>Công cụ xử lý Text AutoLISP</h1>
 
-    <label for="outputText">Kết quả mã AutoLISP:</label>
-    <textarea id="outputText" class="output-box" readonly></textarea>
+<div class="grid-container">
+    <div class="card">
+        <h3>1. Mã hóa (Việt ➔ Lisp)</h3>
+        <label>Nhập tiếng Việt:</label>
+        <textarea id="inputVN" placeholder="Ví dụ: Bản vẽ hoàn công..." oninput="encodeText()"></textarea>
+        
+        <div class="arrow-icon">⬇</div>
+        
+        <label>Kết quả (Mã Lisp):</label>
+        <textarea id="outputLisp" readonly></textarea>
+        
+        <button class="btn-copy btn-blue" onclick="copyResult('outputLisp')">
+            📋 Sao chép mã Lisp
+        </button>
+    </div>
 
-    <button class="copy-btn" onclick="copyToClipboard()">Sao chép kết quả</button>
+    <div class="card">
+        <h3>2. Giải mã (Lisp ➔ Việt)</h3>
+        <label>Dán mã Lisp (`\U+...`):</label>
+        <textarea id="inputLispDecode" placeholder="Ví dụ: \U+0110\U+00E3 xong..." oninput="decodeText()"></textarea>
+        
+        <div class="arrow-icon">⬇</div>
+        
+        <label>Nội dung đọc được:</label>
+        <textarea id="outputVNDecode" readonly></textarea>
+        
+        <button class="btn-copy btn-green" onclick="copyResult('outputVNDecode')">
+            📋 Sao chép Tiếng Việt
+        </button>
+    </div>
 </div>
 
 <script>
-    function convertText() {
-        const input = document.getElementById('inputText').value;
+    function encodeText() {
+        const input = document.getElementById('inputVN').value;
         let output = "";
-
         for (let i = 0; i < input.length; i++) {
             let charCode = input.charCodeAt(i);
-            // Kiểm tra nếu là ký tự Unicode (ngoài bảng ASCII cơ bản)
-            if (charCode > 127) {
-                let hex = charCode.toString(16).toUpperCase().padStart(4, '0');
-                output += "\\U+" + hex;
-            } else {
-                output += input[i];
-            }
+            let char = input[i];
+            if (char === '"') output += '\\"';
+            else if (char === '\\') output += '\\\\';
+            else if (charCode > 127) output += "\\U+" + charCode.toString(16).toUpperCase().padStart(4, '0');
+            else output += char;
         }
-        document.getElementById('outputText').value = output;
+        document.getElementById('outputLisp').value = output;
     }
 
-    function copyToClipboard() {
-        const outputText = document.getElementById('outputText');
-        outputText.select();
-        document.execCommand('copy');
-        alert('Đã sao chép vào bộ nhớ tạm!');
+    function decodeText() {
+        let input = document.getElementById('inputLispDecode').value;
+        let output = input.replace(/\\U\+([0-9A-Fa-f]{4})/gi, (match, hexGroup) => String.fromCharCode(parseInt(hexGroup, 16)));
+        output = output.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        document.getElementById('outputVNDecode').value = output;
+    }
+
+    function copyResult(elementId) {
+        const copyText = document.getElementById(elementId);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(copyText.value).then(() => alert("Đã sao chép thành công!")).catch(err => console.error(err));
+        } else {
+            document.execCommand("copy");
+            alert("Đã sao chép!");
+        }
     }
 </script>
 

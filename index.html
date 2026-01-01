@@ -3,158 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoLISP Converter</title>
+    <title>AutoLISP Translator</title>
     <style>
-        /* Thiết lập giao diện rộng rãi, dễ nhìn */
+        /* Thiết kế tổng thể hiện đại, cân đối */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            line-height: 1.6; 
-            max-width: 1200px; 
-            margin: 20px auto; 
-            padding: 20px; 
-            background-color: #f0f2f5; 
+            background-color: #f4f6f8; 
+            margin: 0; padding: 40px 20px; 
+            display: flex; justify-content: center;
         }
-        
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
-        
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
 
-        .card { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 12px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
-            display: flex; flex-direction: column; 
+        .container {
+            width: 100%; max-width: 900px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: border-top-color 0.3s;
+            border-top: 6px solid #3498db; /* Mặc định màu xanh dương */
         }
-        
-        .card h3 { margin-top: 0; color: #3498db; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; }
-        
-        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 8px; color: #555; font-size: 18px; }
-        
-        /* Ô nhập liệu to, rõ ràng */
-        textarea { 
-            width: 100%; height: 300px; padding: 15px; 
-            border: 1px solid #ccc; border-radius: 8px; 
-            box-sizing: border-box; font-family: 'Courier New', monospace; 
-            font-size: 16px; resize: vertical; line-height: 1.5;
-        }
-        textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px rgba(52, 152, 219, 0.3); }
-        
-        .arrow-icon { text-align: center; font-size: 30px; color: #95a5a6; margin: 15px 0; }
-        
-        #inputVN { background-color: #fff; }
-        #outputLisp { background-color: #f4f6f7; color: #2980b9; font-weight: bold; }
-        
-        #inputLispDecode { background-color: #fff; }
-        #outputVNDecode { background-color: #e8f8f5; color: #27ae60; font-weight: bold; }
 
-        /* Nút Copy đẹp */
+        /* Header và Tiêu đề */
+        .header { text-align: center; padding: 25px 0 10px; }
+        h1 { margin: 0; color: #2c3e50; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* KHU VỰC ĐIỀU KHIỂN (CONTROL PANEL) */
+        .control-panel {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+        }
+
+        /* Nút chuyển đổi chế độ chính (Tabs) */
+        .mode-switch {
+            display: flex; background: #e9ecef; border-radius: 30px; pading: 4px;
+            position: relative; overflow: hidden;
+        }
+        .mode-switch label {
+            padding: 10px 25px; cursor: pointer; font-weight: bold; color: #6c757d;
+            transition: all 0.3s; z-index: 2; position: relative;
+        }
+        .mode-switch input { display: none; }
+        
+        /* Hiệu ứng khi chọn Tab */
+        .mode-switch input:checked + span {
+            color: white;
+        }
+        /* Background trượt cho Tab (Dùng JS để set class active) */
+        .tab-active-blue { background-color: #3498db; border-radius: 30px; }
+        .tab-active-green { background-color: #27ae60; border-radius: 30px; }
+
+
+        /* Tùy chọn phụ (Code/Text) */
+        .sub-options {
+            display: flex; gap: 20px; font-size: 14px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .sub-options label { cursor: pointer; display: flex; align-items: center; gap: 5px; color: #555; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden { display: none !important; }
+
+        /* KHU VỰC NHẬP LIỆU */
+        .io-area { padding: 30px; display: grid; gap: 20px; }
+        
+        .input-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #34495e; font-size: 16px; }
+        
+        textarea {
+            width: 100%; height: 200px; padding: 15px;
+            border: 2px solid #e9ecef; border-radius: 8px;
+            font-family: 'Courier New', monospace; font-size: 15px;
+            box-sizing: border-box; resize: vertical; transition: border-color 0.3s;
+        }
+        textarea:focus { outline: none; border-color: #3498db; }
+
+        .result-box { background-color: #f8f9fa; color: #333; font-weight: bold; }
+
+        /* Nút Copy */
         .btn-copy {
-            margin-top: 20px; padding: 15px; border: none; border-radius: 8px;
-            cursor: pointer; font-weight: bold; font-size: 16px; color: white;
-            transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 15px; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: bold; color: white; cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
-        .btn-copy:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-blue { background-color: #3498db; }
-        .btn-green { background-color: #27ae60; }
+        .btn-copy:active { transform: scale(0.98); }
+        
+        /* Classes màu sắc động */
+        .theme-blue textarea:focus { border-color: #3498db; }
+        .theme-blue .btn-copy { background-color: #3498db; }
+        .theme-blue .btn-copy:hover { background-color: #2980b9; }
 
-        /* Highlight ghi chú tính năng */
-        .note { font-size: 13px; color: #e74c3c; margin-top: 5px; font-style: italic;}
+        .theme-green textarea:focus { border-color: #27ae60; }
+        .theme-green .btn-copy { background-color: #27ae60; }
+        .theme-green .btn-copy:hover { background-color: #219150; }
+
     </style>
 </head>
-<body>
-
-<h1>Công cụ xử lý Text AutoLISP</h1>
-
-<div class="grid-container">
-    <div class="card">
-        <h3>1. Mã hóa (Việt ➔ Lisp)</h3>
-        <label>Nhập tiếng Việt:</label>
-        <textarea id="inputVN" placeholder='Ví dụ: Thép hình chữ "I", Đường dẫn C:\AutoCAD...' oninput="encodeText()"></textarea>
-        
-        <div class="arrow-icon">⬇</div>
-        
-        <label>Kết quả (Mã Lisp):</label>
-        <textarea id="outputLisp" readonly></textarea>
-        
-        <button class="btn-copy btn-blue" onclick="copyResult('outputLisp')">
-            📋 Sao chép mã Lisp
-        </button>
+<body class="theme-blue"> <div class="container" id="mainContainer">
+    <div class="header">
+        <h1>Bộ chuyển đổi AutoLISP</h1>
     </div>
 
-    <div class="card">
-        <h3>2. Giải mã (Lisp ➔ Việt)</h3>
-        <label>Dán mã Lisp (`\U+...`):</label>
-        <textarea id="inputLispDecode" placeholder="Ví dụ: \U+0110\U+00E3 xong..." oninput="decodeText()"></textarea>
-        
-        <div class="arrow-icon">⬇</div>
-        
-        <label>Nội dung đọc được:</label>
-        <textarea id="outputVNDecode" readonly></textarea>
-        
-        <button class="btn-copy btn-green" onclick="copyResult('outputVNDecode')">
-            📋 Sao chép Tiếng Việt
-        </button>
+    <div class="control-panel">
+        <div class="mode-switch">
+            <label id="tabEncode" class="tab-active-blue" onclick="switchDirection('encode')">
+                Tiếng Việt ➔ AutoLISP
+            </label>
+            <label id="tabDecode" onclick="switchDirection('decode')">
+                AutoLISP ➔ Tiếng Việt
+            </label>
+        </div>
+
+        <div class="sub-options" id="subOptions">
+            <label><input type="radio" name="codeType" value="code" checked onchange="process()"> Nguyên Code (Code Block)</label>
+            <label><input type="radio" name="codeType" value="text" onchange="process()"> Văn bản thường (Raw Text)</label>
+        </div>
+    </div>
+
+    <div class="io-area">
+        <div class="input-group">
+            <label id="lblInput">Nhập nội dung Tiếng Việt:</label>
+            <textarea id="inputText" placeholder="Ví dụ: (alert &quot;Xin chào&quot;)..." oninput="process()"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label id="lblOutput">Kết quả Mã Lisp:</label>
+            <textarea id="outputText" class="result-box" readonly></textarea>
+        </div>
+
+        <button class="btn-copy" onclick="copyResult()">📋 Sao chép kết quả</button>
     </div>
 </div>
 
 <script>
-    // --- HÀM MÃ HÓA (NÂNG CẤP) ---
-    function encodeText() {
-        const input = document.getElementById('inputVN').value;
+    // Trạng thái hiện tại: 'encode' (Việt->Lisp) hoặc 'decode' (Lisp->Việt)
+    let currentMode = 'encode';
+
+    function switchDirection(mode) {
+        currentMode = mode;
+        const container = document.getElementById('mainContainer');
+        const body = document.body;
+        const subOpts = document.getElementById('subOptions');
+        
+        // Tab UI Elements
+        const tabEncode = document.getElementById('tabEncode');
+        const tabDecode = document.getElementById('tabDecode');
+        
+        // Text UI Elements
+        const lblInput = document.getElementById('lblInput');
+        const lblOutput = document.getElementById('lblOutput');
+        const txtInput = document.getElementById('inputText');
+        const txtOutput = document.getElementById('outputText');
+
+        // Reset dữ liệu cũ để tránh nhầm lẫn
+        txtInput.value = "";
+        txtOutput.value = "";
+
+        if (mode === 'encode') {
+            // Giao diện ENCODE (Xanh Dương)
+            container.style.borderTopColor = "#3498db";
+            body.className = "theme-blue";
+            
+            tabEncode.className = "tab-active-blue";
+            tabEncode.style.color = "white";
+            tabDecode.className = "";
+            tabDecode.style.color = "#6c757d";
+
+            subOpts.classList.remove('hidden'); // Hiện tùy chọn Code/Text
+            
+            lblInput.innerText = "Nhập nội dung Tiếng Việt:";
+            lblOutput.innerText = "Kết quả Mã Lisp:";
+            txtInput.placeholder = 'Ví dụ: (alert "Xin chào")...';
+        } else {
+            // Giao diện DECODE (Xanh Lá)
+            container.style.borderTopColor = "#27ae60";
+            body.className = "theme-green";
+            
+            tabEncode.className = "";
+            tabEncode.style.color = "#6c757d";
+            tabDecode.className = "tab-active-green";
+            tabDecode.style.color = "white";
+
+            subOpts.classList.add('hidden'); // Ẩn tùy chọn Code/Text (không cần thiết)
+            
+            lblInput.innerText = "Dán Mã Lisp (\\U+xxxx):";
+            lblOutput.innerText = "Nội dung Tiếng Việt:";
+            txtInput.placeholder = 'Ví dụ: \\U+0110\\U+00E3 xong...';
+        }
+    }
+
+    // Hàm xử lý chính (Điều hướng dựa trên mode hiện tại)
+    function process() {
+        if (currentMode === 'encode') {
+            runEncode();
+        } else {
+            runDecode();
+        }
+    }
+
+    // Logic Mã hóa (Việt -> Lisp)
+    function runEncode() {
+        const input = document.getElementById('inputText').value;
+        const type = document.querySelector('input[name="codeType"]:checked').value;
         let output = "";
 
         for (let i = 0; i < input.length; i++) {
             let charCode = input.charCodeAt(i);
             let char = input[i];
 
-            // 1. XỬ LÝ DẤU NGOẶC KÉP (") -> Thêm \"
-            if (char === '"') {
-                output += '\\"'; 
-            } 
-            // 2. XỬ LÝ DẤU GẠCH CHÉO (\) -> Thêm \\
-            else if (char === '\\') {
-                output += '\\\\'; 
-            } 
-            // 3. XỬ LÝ UNICODE TIẾNG VIỆT
-            else if (charCode > 127) {
-                let hex = charCode.toString(16).toUpperCase().padStart(4, '0');
-                output += "\\U+" + hex;
-            } 
-            // 4. KÝ TỰ THƯỜNG
-            else {
-                output += char;
+            if (type === "text") {
+                // Mode Text: Xử lý kỹ ký tự đặc biệt
+                if (char === '"') output += '\\"';
+                else if (char === '\\') output += '\\\\';
+                else if (charCode > 127) output += "\\U+" + charCode.toString(16).toUpperCase().padStart(4, '0');
+                else output += char;
+            } else {
+                // Mode Code Block: Giữ nguyên cấu trúc
+                if (charCode > 127) output += "\\U+" + charCode.toString(16).toUpperCase().padStart(4, '0');
+                else output += char;
             }
         }
-        document.getElementById('outputLisp').value = output;
+        document.getElementById('outputText').value = output;
     }
 
-    // --- HÀM GIẢI MÃ ---
-    function decodeText() {
-        let input = document.getElementById('inputLispDecode').value;
+    // Logic Giải mã (Lisp -> Việt)
+    function runDecode() {
+        let input = document.getElementById('inputText').value;
         
-        // Bước 1: Dịch mã Unicode \U+xxxx
+        // 1. Dịch mã Unicode
         let output = input.replace(/\\U\+([0-9A-Fa-f]{4})/gi, (match, hexGroup) => {
             return String.fromCharCode(parseInt(hexGroup, 16));
         });
 
-        // Bước 2: Dịch ngược ký tự đặc biệt (\\" -> " và \\\\ -> \)
-        // Lưu ý: Phải thay thế \\\\ trước để tránh nhầm lẫn
+        // 2. Làm sạch ký tự thoát (Escape characters) để dễ đọc
         output = output.replace(/\\\\/g, '\\').replace(/\\"/g, '"');
         
-        document.getElementById('outputVNDecode').value = output;
+        document.getElementById('outputText').value = output;
     }
 
-    // --- HÀM COPY ---
-    function copyResult(elementId) {
-        const copyText = document.getElementById(elementId);
+    function copyResult() {
+        const copyText = document.getElementById("outputText");
         copyText.select();
         copyText.setSelectionRange(0, 99999);
         
         if (navigator.clipboard) {
             navigator.clipboard.writeText(copyText.value)
-                .then(() => alert("Đã sao chép thành công!"))
+                .then(() => alert("Đã sao chép!"))
                 .catch(err => console.error(err));
         } else {
             document.execCommand("copy");
